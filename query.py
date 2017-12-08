@@ -2,17 +2,11 @@ import tdclient
 import config
 import argparse
 import sys
+from prettytable import PrettyTable
+import csv
 
-# -f / -- format is optional and specifies the output format: tabular by default
-# -c / -- column is optional and specifies the comma separated list of columns to restrict the result toself.
-# Read all columns if not specified.
-# -l / -- limit is optional and specifies the limit of records returned. Read all records if not specified.
-# -m / -- min is optional and specifies the minimum timestamp: NULL by default
-# -M / -- MAX is optional and specifies the maximum timestamp: NULL by default
-# -e / -- engine is optional and specifies the query engine: ‘presto’ by default
-
+# Initial parser and add arguments
 parser = argparse.ArgumentParser(prog='PROG')
-
 parser.add_argument('-f', '--format', default = 'tablular')
 parser.add_argument('-c', '--column', nargs = '*', default = '*')
 parser.add_argument('-e', '--engine', default = 'presto')
@@ -22,12 +16,19 @@ parser.add_argument('-l', '--limit', default = 'NULL')
 parser.add_argument('-m', '--min', default = 'NULL')
 parser.add_argument('-M', '--MAX', default = 'NULL')
 
+# Parse args
 args = parser.parse_args(sys.argv[1:])
 
-query = 'SELECT ' + ' '.join(args.column) + ' FROM ' + args.table_name + ' '
+# Build query string
+if args.column == '*':
+    columns = ['time', 'total_addresses', 'blocksize', 'price_USD', 'hashrate', 'total_eth_growth', 'market_cap_value', 'transactions']
+else:
+    columns = args.column
+
+query = 'SELECT ' + ', '.join(columns) + ' FROM ' + args.table_name + ' '
 
 if args.min != 'NULL' and args.MAX != 'NULL':
-    time_range = "WHERE TD_TIME_RANGE(timestamp," + args.min + "," + args.MAX + ")"
+    time_range = "WHERE TD_TIME_RANGE(time," + args.min + "," + args.MAX + ")"
     query += time_range
 
 if args.limit != 'NULL':
@@ -35,8 +36,20 @@ if args.limit != 'NULL':
 
 print(query)
 
-# with tdclient.Client(config.TD_API_KEY) as td:
-#     job = td.query("cities", "SELECT * FROM world_cities LIMIT 5", type="hive")
-#     job.wait()
-#     for row in job.result():
-#         print(repr(row))
+t = PrettyTable(columns)
+t.align = 'r'
+
+# Run query and display results
+with tdclient.Client(config.TD_API_KEY) as td:
+    job = td.query(args.db_name, query, type=args.engine)
+    job.wait()
+
+    if args.format == 'tablular':
+        for row in job.result():
+            t.add_row(row)
+        print(t)
+
+    # if args.format == 'csv'
+    #     with open('results.csv', 'wb') as f:
+    #         writer = csv.writer(f)
+    #         writer.writerows(row)
