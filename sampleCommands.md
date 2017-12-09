@@ -163,7 +163,7 @@ python query.py -e hive -f tabular -m 1440374400 ethereum ethereum_prices_sample
 python query.py -e hive -f excel ethereum ethereum_prices_sample
 ```
 ```
-Please enter a valid format (Either "tabular" or "csv")
+> Please enter a valid format (Either "tabular" or "csv")
 ```
 
 
@@ -172,7 +172,7 @@ Please enter a valid format (Either "tabular" or "csv")
 python query.py -e hive -f csv -m 1440720000 -M 1438214400 ethereum ethereum_prices_sample
 ```
 ```
-Min timestamp value must be smaller than the max timestamp value
+> Min timestamp value must be smaller than the max timestamp value
 ```
 
 
@@ -181,7 +181,7 @@ Min timestamp value must be smaller than the max timestamp value
 python query.py -e hive -l notAnInteger ethereum ethereum_prices_sample
 ```
 ```
-limit parameter must be an integer
+> limit parameter must be an integer
 ```
 
 
@@ -189,5 +189,5 @@ limit parameter must be an integer
 python query.py -e hive -f csv -m 1438214400 -M 2017-12-09 ethereum ethereum_prices_sample
 ```
 ```
-Max timstamp value must be unix time or NULL
+> Max timstamp value must be unix time or NULL
 ```
