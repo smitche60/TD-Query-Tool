@@ -10,7 +10,7 @@ import csv
 #########################################
 
 parser = argparse.ArgumentParser(prog='PROG')
-parser.add_argument('-f', '--format', default = 'tablular')
+parser.add_argument('-f', '--format', default = 'tabular')
 parser.add_argument('-c', '--column', nargs = '*', default = '*')
 parser.add_argument('-e', '--engine', default = 'presto')
 parser.add_argument('db_name')
@@ -26,6 +26,13 @@ args = parser.parse_args(sys.argv[1:])
 ## Validate input ##
 ####################
 
+def isInt(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 if args.format != 'tabular' and args.format != 'csv':
     sys.exit('Please enter a valid format (Either "tabular" or "csv")')
 
@@ -38,16 +45,16 @@ if not args.table_name:
 if not args.db_name:
     sys.exit('db_name must be defined')
 
-if not isinstance(args.limit, int) and args.limit != 'NULL':
+if not isInt(args.limit) and args.limit != 'NULL':
     sys.exit('limit parameter must be an integer')
 
-if args.min > args.MAX:
+if args.min > args.MAX and args.min != 'NULL' and args.MAX != 'NULL':
     sys.exit('Min timestamp value must be smaller than the max timestamp value')
 
-if not isinstance(args.min, str) and args.min != 'NULL':
+if not isInt(args.min) and args.min != 'NULL':
     sys.exit('Min timstamp value must be unix time or NULL')
 
-if not isinstance(args.MAX, str) and args.MAX != 'NULL':
+if not isInt(args.MAX) and args.MAX != 'NULL':
     sys.exit('Max timstamp value must be unix time or NULL')
 
 ########################
@@ -66,6 +73,14 @@ query = 'SELECT ' + ', '.join(columns) + ' FROM ' + args.table_name + ' '
 # Add TD_TIME_RANGE to query if neccessary
 if args.min != 'NULL' and args.MAX != 'NULL':
     time_range = "WHERE TD_TIME_RANGE(time," + args.min + "," + args.MAX + ")"
+    query += time_range
+
+if args.min == 'NULL' and args.MAX != 'NULL':
+    time_range = "WHERE TD_TIME_RANGE(time, NULL, " + args.MAX + ")"
+    query += time_range
+
+if args.min != 'NULL' and args.MAX == 'NULL':
+    time_range = "WHERE TD_TIME_RANGE(time, " + args.min + ")"
     query += time_range
 
 # Add limit clause to query if neccessary
