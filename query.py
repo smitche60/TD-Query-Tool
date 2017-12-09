@@ -36,20 +36,21 @@ if args.limit != 'NULL':
 
 print(query)
 
-t = PrettyTable(columns)
-t.align = 'r'
-
-# Run query and display results
+# Run query and output results
 with tdclient.Client(config.TD_API_KEY) as td:
     job = td.query(args.db_name, query, type=args.engine)
     job.wait()
 
-    if args.format == 'tablular':
+    if args.format == 'tabular':
+        t = PrettyTable(columns)
+        t.align = 'r'
         for row in job.result():
             t.add_row(row)
         print(t)
 
-    # if args.format == 'csv'
-    #     with open('results.csv', 'wb') as f:
-    #         writer = csv.writer(f)
-    #         writer.writerows(row)
+    if args.format == 'csv':
+        with open('results.csv', 'w') as f:
+            writer = csv.DictWriter(f, fieldnames=columns)
+            writer.writeheader()
+            writer = csv.writer(f)
+            writer.writerows(job.result())
