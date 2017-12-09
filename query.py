@@ -5,7 +5,10 @@ import sys
 from prettytable import PrettyTable
 import csv
 
-# Initialize parser and add arguments
+#########################################
+## Initialize parser and add arguments ##
+#########################################
+
 parser = argparse.ArgumentParser(prog='PROG')
 parser.add_argument('-f', '--format', default = 'tablular')
 parser.add_argument('-c', '--column', nargs = '*', default = '*')
@@ -19,7 +22,10 @@ parser.add_argument('-M', '--MAX', default = 'NULL')
 # Parse args
 args = parser.parse_args(sys.argv[1:])
 
-# Validate input
+####################
+## Validate input ##
+####################
+
 if args.format != 'tabular' and args.format != 'csv':
     sys.exit('Please enter a valid format (Either "tabular" or "csv")')
 
@@ -44,35 +50,47 @@ if not isinstance(args.min, str) and args.min != 'NULL':
 if not isinstance(args.MAX, str) and args.MAX != 'NULL':
     sys.exit('Max timstamp value must be unix time or NULL')
 
-# Build query string
+########################
+## Build query string ##
+########################
+
+# Handle default column parameter
 if args.column == '*':
     columns = ['time', 'total_addresses', 'blocksize', 'price_USD', 'hashrate', 'total_eth_growth', 'market_cap_value', 'transactions']
 else:
     columns = args.column
 
+# Define initial query body
 query = 'SELECT ' + ', '.join(columns) + ' FROM ' + args.table_name + ' '
 
+# Add TD_TIME_RANGE to query if neccessary
 if args.min != 'NULL' and args.MAX != 'NULL':
     time_range = "WHERE TD_TIME_RANGE(time," + args.min + "," + args.MAX + ")"
     query += time_range
 
+# Add limit clause to query if neccessary
 if args.limit != 'NULL':
     query += ' LIMIT ' + args.limit
 
 print(query)
 
-# Run query and output results
+##################################
+## Run query and output results ##
+##################################
+
 with tdclient.Client(config.TD_API_KEY) as td:
     job = td.query(args.db_name, query, type=args.engine)
     job.wait()
 
-    emptyResult = true
+    # Check for empty results
+    emptyResult = True
     for row in job.result():
-        emptyResult = false
+        emptyResult = False
 
-    if emptyResult == true:
+    if emptyResult == True:
         sys.exit("Query returned no results")
 
+    # Output tabular results
     if args.format == 'tabular':
         t = PrettyTable(columns)
         t.align = 'r'
@@ -81,6 +99,7 @@ with tdclient.Client(config.TD_API_KEY) as td:
         print(t)
         sys.exit(0)
 
+    # Output csv results
     if args.format == 'csv':
         with open('results.csv', 'w') as f:
             writer = csv.DictWriter(f, fieldnames=columns)
