@@ -87,8 +87,6 @@ if args.min != 'NULL' and args.MAX == 'NULL':
 if args.limit != 'NULL':
     query += ' LIMIT ' + args.limit
 
-print(query)
-
 ##################################
 ## Run query and output results ##
 ##################################
